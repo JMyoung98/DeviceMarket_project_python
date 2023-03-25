@@ -1,12 +1,25 @@
 import cv2
 import LaneRecog as lr
 import torch
+import os
 import numpy as np
 from utils.general import non_max_suppression
 from utils.general import scale_boxes
 from utils.torch_utils import select_device, time_sync
 from models.experimental import attempt_load
 import datetime
+
+def createFolder(directory):
+        '''
+        Create folder
+            create a folder if it does not exist
+        '''
+        try:
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+        except OSError:
+            print ('Error: Creating directory. ' +  directory)
+
 #from datetime import datetime
 # YOLOv5 weight 파일 경로
 weight = '/home/jetson/Desktop/code/yolov5/final3.pt'
@@ -39,15 +52,14 @@ model_oldnow=0
 minute =0
 cnt = 0
 frame_cnt = 0
-while True:    
-    now = datetime.datetime.now()
-    now_HMS=now.strftime('%H%M%S')
-    f = open(f'CapList_{now_HMS}.csv','w')
+pre_time= datetime.datetime.now()
+pre_HMS=pre_time.strftime('%H%M%S')
+while True:        
+    createFolder(f'/home/jetson/Desktop/CAM/{pre_HMS}') # CAM폴더 만들기
+    f = open(f'/home/jetson/Desktop/CAM/{pre_HMS}/CapList_{pre_HMS}.csv','w')
     f.write('time,image,pothole\n')
     # 웹캠 프레임 읽기 루프
     while True:
-        pre = datetime.datetime.now()
-        
         # 프레임 읽기
         ret , frame = cap.read()
         
@@ -55,6 +67,7 @@ while True:
         if not ret:
             i = 10 #불피요한 while문 반복을 막기위해
             break
+        cur_time= datetime.datetime.now()
         top = lr.top_view(frame,width,height)
         interest = lr.InterestRegion(frame,width,height)
         canny = lr.Canny(interest)
@@ -94,26 +107,16 @@ while True:
                     now = datetime.datetime.now()
                     now_HMS=now.strftime('%H%M%S')
                     if now.second != model_oldnow: # frame_cnt seoljeong
-                        frame_cnt = cv2.PROP_FPS
-                        if frame_cnt == now.second:
-                            cv2.imwrite(f'/home/jetson/Desktop/code/yolov5/Capture_{now_HMS}.jpg',frame)
-                            f.write(f'{now_HMS},Capture_{now_HMS}.jpg,{len(pred)}\n')
-                            model_oldnow = now.second
+                        cv2.imwrite(f'/home/jetson/Desktop/CAM/{pre_HMS}/Capture_{now_HMS}.jpg',frame)
+                        f.write(f'{now_HMS},Capture_{now_HMS}.jpg,{len(pred)}\n')
+                        model_oldnow = now.second
         
-        if pre.second != oldnow: 
-            oldnow=pre.second
-            cnt += 1
-            if cnt == 60:
-                minute += 1
-                cnt = 0
-                print(str(minute)+'분')                
-        
-        if minute == 2:
-            i +=1
-            print(pre.second)
-            minute = 0
-            oldnow=pre.second
+        if cur_time.minute - pre_time.minute >=2:
+            i += 1
+            pre_time = cur_time
+            pre_HMS = pre_time.strftime('%H%M%S')
             break
+
         # 프레임 출력
         cv2.imshow('frame', frame)
         
