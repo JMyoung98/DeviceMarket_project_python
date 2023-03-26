@@ -41,7 +41,9 @@ pothole_idx = None
 # 입력 이미지 크기
 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-
+fps = cap.get(cv2.CAP_PROP_FPS)
+fps_cnt = 0
+fps_cnt_save = 0
 # 텍스트 출력 폰트 설정
 font = cv2.FONT_HERSHEY_SIMPLEX
 font_scale = 1
@@ -51,7 +53,7 @@ oldnow = 0
 model_oldnow=0
 minute =0
 cnt = 0
-frame_cnt = 0
+
 pre_time= datetime.datetime.now()
 pre_HMS=pre_time.strftime('%H%M%S')
 while True:        
@@ -62,7 +64,7 @@ while True:
     while True:
         # 프레임 읽기
         ret , frame = cap.read()
-        
+        fps_cnt +=1
         # 프레임이 없으면 루프 탈출
         if not ret:
             i = 10 #불피요한 while문 반복을 막기위해
@@ -106,11 +108,11 @@ while True:
                 if model.names[int(cls)] == 'pothole':
                     now = datetime.datetime.now()
                     now_HMS=now.strftime('%H%M%S')
-                    if now.second != model_oldnow: # frame_cnt seoljeong
+                    if (fps_cnt - fps_cnt_save >= (fps)): # fps_cnt setup
                         cv2.imwrite(f'/home/jetson/Desktop/CAM/{pre_HMS}/Capture_{now_HMS}.jpg',frame)
                         f.write(f'{now_HMS},Capture_{now_HMS}.jpg,{len(pred)}\n')
-                        model_oldnow = now.second
-        
+                        fps_cnt_save=fps_cnt
+
         if cur_time.minute - pre_time.minute >=2:
             i += 1
             pre_time = cur_time
