@@ -56,6 +56,7 @@ cnt = 0
 
 pre_time= datetime.datetime.now()
 pre_HMS=pre_time.strftime('%H%M%S')
+pre = pre_HMS
 while True:        
     createFolder(f'/home/jetson/Desktop/CAM/{pre_HMS}') # CAM폴더 만들기
     f = open(f'/home/jetson/Desktop/CAM/{pre_HMS}/CapList_{pre_HMS}.csv','w')
@@ -126,7 +127,11 @@ while True:
         if cv2.waitKey(1) & 0xFF == ord('q'):
             i = 10
             break
-    f.close()    
+    f.close()
+
+    os.system(f'zip -j /home/jetson/Desktop/CAM_SEND/{pre_HMS}.zip /home/jetson/Desktop/CAM/{pre}/*.*')
+
+    pre = pre_HMS
     if i == 10:
         break
             
