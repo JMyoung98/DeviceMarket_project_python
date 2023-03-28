@@ -2,9 +2,8 @@ import cv2
 import LaneRecog as lr
 import torch
 import os
-import numpy as np
-from utils.general import non_max_suppression
-from utils.general import scale_boxes
+import numpy
+from utils.general import scale_boxes, non_max_suppression
 from utils.torch_utils import select_device, time_sync
 from models.experimental import attempt_load
 import datetime
@@ -20,9 +19,8 @@ def createFolder(directory):
         except OSError:
             print ('Error: Creating directory. ' +  directory)
 
-#from datetime import datetime
 # YOLOv5 weight 파일 경로
-weight = '/home/jetson/Desktop/code/yolov5/final3.pt'
+weight = '/home/jetson/Desktop/yolov5/final3.pt'
 
 # GPU or CPU 디바이스 설정
 device = select_device('')
@@ -30,12 +28,12 @@ device = select_device('')
 # YOLOv5 모델 로드
 model = attempt_load(weight,device=device)
 # YOLOv5 inference 설정값
-conf_thres = 0.45
+conf_thres = 0.55
 iou_thres=0.45
-file = '/home/jetson/Desktop/code/yolov5/Bike_Lane2023-03-16_17_50_34.avi'
-file2 = 'Bike_Lane_151146.avi'
+file='/home/jetson/Desktop/yolov5/Bike_Lane2023-03-16_17:44:51.avi'
+file2 = '/home/jetson/Desktop/yolov5/Bike_Lane_151146.avi'
 # 웹캠 캡쳐 객체 생성
-cap = cv2.VideoCapture(file2)
+cap = cv2.VideoCapture(file)
 pothole_idx = None
 
 # 입력 이미지 크기
@@ -53,7 +51,7 @@ oldnow = 0
 model_oldnow=0
 minute =0
 cnt = 0
-
+frame_skip = 5
 pre_time= datetime.datetime.now()
 pre_HMS=pre_time.strftime('%H%M%S')
 pre = pre_HMS
@@ -65,11 +63,17 @@ while True:
     while True:
         # 프레임 읽기
         ret , frame = cap.read()
-        fps_cnt +=1
+        
         # 프레임이 없으면 루프 탈출
         if not ret:
             i = 10 #불피요한 while문 반복을 막기위해
             break
+        for j in range(frame_skip):
+            ret = cap.grab()
+            if not ret:
+                i=10
+                break
+        fps_cnt +=1
         cur_time= datetime.datetime.now()
         top = lr.top_view(frame,width,height)
         interest = lr.InterestRegion(frame,width,height)
@@ -129,7 +133,7 @@ while True:
             break
     f.close()
 
-    os.system(f'zip -j /home/jetson/Desktop/CAM_SEND/{pre_HMS}.zip /home/jetson/Desktop/CAM/{pre}/*.*')
+    os.system(f'zip -j /home/jetson/Desktop/CAM_SEND/CAM_ZIP.zip /home/jetson/Desktop/CAM/{pre}/*')
 
     pre = pre_HMS
     if i == 10:
