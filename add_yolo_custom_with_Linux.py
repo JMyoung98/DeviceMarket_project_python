@@ -31,10 +31,10 @@ model = attempt_load(weight,device=device)
 # YOLOv5 inference 설정값
 conf_thres = 0.5
 iou_thres=0.45
-file='/home/jetson/Desktop/yolov5/Bike_Lane2023-03-16_17:44:51.avi'
+file='/home/jetson/Desktop/yolov5/Bike_Lane2023-03-16_17:50:34.avi'
 file2 = '/home/jetson/Desktop/yolov5/Bike_Lane_151146.avi'
 # 웹캠 캡쳐 객체 생성
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(file)
 pothole_idx = None
 
 # 입력 이미지 크기
@@ -74,12 +74,17 @@ while True:
         if not ret:
             i = 20 #불피요한 while문 반복을 막기위해
             break
-        fps_cnt +=1
+            
+        for j in range(frame_skip):
+            ret = cap.grab()
+            if not ret:
+                break
+            
+        frame_cnt +=1
         cur_time= datetime.datetime.now()
-        top = lr.top_view(frame,width,height)
         interest = lr.InterestRegion(frame,width,height)
-        canny = lr.Canny(interest)
-        #cv2.imshow('can',canny)
+
+        cv2.imshow('ROI',interest)
         # 원본 이미지 RGB 색상채널 순서로 변경
         img = interest[:,:,::-1]
 
@@ -113,7 +118,7 @@ while True:
                 cv2.putText(frame, label, (int(xyxy[0]), int(xyxy[1])-10), font, font_scale, (0, 255, 255), font_thickness)
                 
                 #객체가 pothole인 경우
-                if model.names[int(cls)] == 'pothole':
+                if model.names[int(cls)] == 'manhole':
                     now = datetime.datetime.now()
                     now_HMS=now.strftime('%H%M%S')
                     

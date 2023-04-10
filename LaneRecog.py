@@ -1,8 +1,10 @@
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
-#연산영역을 줄이기 위한 ROI 설정
+
 def InterestRegion(frame, width, height):
+    #Width 기준
     frame = np.array(frame, dtype=np.uint8)
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     lower_white = np.array([0,0,0])
